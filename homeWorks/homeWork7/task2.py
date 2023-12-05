@@ -1,5 +1,5 @@
-from collections import Counter
 import re
+from collections import Counter
 
 """
 Винни Пух
@@ -31,24 +31,26 @@ stroka = 'пара-ра-рам рам-пам-папам па-ра-па-дам'
 
 Парам пам-пам
 """
-stroka = 'кто-ходит-в-гости-по-утрам тот-поступает-мудро'
-VOWELS = r'[aeiouyаеиоуыэюя]'
+stroka = "кто-ходит-в-гости-по-утрам тот-поступает-мудро"
+VOWELS = r"[aeiouyаеиоуыэюя]"
 # stroka = 'как ве-тер сме-ёт лис-ти'
-stroka = 'пара-ра-рам рам-пам-папам па-ра-па-дам'
+stroka = "пара-ра-рам рам-пам-папам па-ра-па-дам"
 
 
 def check_rithm(string_: str) -> str:
     phrases = string_.split()
     print(phrases)
     if len(phrases) < 2:
-        return 'Количество фраз должно быть больше одной!'
+        return "Количество фраз должно быть больше одной!"
     phrases = [re.findall(VOWELS, phrase) for phrase in phrases]
     print(phrases)
-    phrases_counter = [sum(Counter(phrase).values()) for index, phrase in enumerate(phrases)]
+    phrases_counter = [
+        sum(Counter(phrase).values()) for index, phrase in enumerate(phrases)
+    ]
     print(phrases_counter)
 
     is_rithm = phrases_counter[0] == sum(phrases_counter) / len(phrases_counter)
-    return 'Парам пам-пам' if is_rithm else 'Пам парам'
+    return "Парам пам-пам" if is_rithm else "Пам парам"
 
 
 print(check_rithm(stroka))
