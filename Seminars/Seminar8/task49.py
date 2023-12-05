@@ -27,6 +27,20 @@ class Contact:
     lastname: str
     phone_number: str
 
+    def values(self) -> list:
+        return [self.name, self.surname, self.lastname, self.phone_number]
+
+    def __setitem__(self, item, value):
+        # items = {
+        #     "name": self.name,
+        #     "surname": self.surname,
+        #     "lastname": self.lastname,
+        #     "phone_number": self.phone_number,
+        # }
+        # items[item] = value
+        # input()
+        setattr(self, item, value)
+
     def __str__(self) -> str:
         return (
             self.name
@@ -44,7 +58,7 @@ class PhoneBook:
     contacts: list[Contact]
 
     def search_contact(self, search_string: str) -> list:
-        search_list = ["".join(contact.values()) for contact in self.contacts]
+        search_list = [str(contact) for contact in self.contacts]
         # print(search_list)
         result = [
             index
@@ -89,21 +103,24 @@ class FormatData:
         return data
 
 
-def manual_input() -> PhoneBook:
+def manual_input(lst: PhoneBook = None) -> PhoneBook:
     print("Введите Имя Отчество Фамилию НомерТелефона через пробел в одну строку")
     print("Для выхода введите quit")
-    lst = []
+    if not lst:
+        lst = []
+    else:
+        lst = lst.contacts
     phone_book = PhoneBook(lst)
     while (input_string := input("Ваш ввод:")) != "quit":
-        phone_book.contacts.append(dict(zip(KEYS, input_string.split())))
+        phone_book.contacts.append(Contact(*input_string.split()))
     return phone_book
 
 
-def import_phone() -> PhoneBook:
+def import_phone(lst=None) -> PhoneBook:
     import_from_txt = ImportPhoneBook("phones.txt").import_from_file()
-    print(import_from_txt)
+    # print(import_from_txt)
     import_from_txt = [
-        dict(zip(KEYS, contact.strip().split(","))) for contact in import_from_txt
+        Contact(*contact.strip().split(",")) for contact in import_from_txt
     ]
     phone_book = PhoneBook(import_from_txt)
     return phone_book
@@ -119,24 +136,26 @@ def export_phones(phone_book: PhoneBook) -> None:
     ExportPhoneBook("phones.txt", phone_book, FormatData()).export_to_file()
 
 
-def show_contacts(phone_book: PhoneBook) -> None:
+def show_contacts(phone_book: PhoneBook, pause: bool = True) -> None:
     for index, contact in enumerate(phone_book.contacts):
         print(index, ".", *contact.values())
-    input("Нажмите ENTER для продолжения...")
+    if pause:
+        input("Нажмите ENTER для продолжения...")
 
 
 def edit_contact(phone_book: PhoneBook) -> None:
-    show_contacts(phone_book)
+    show_contacts(phone_book, False)
     index = int(input("Введите номер контакта, который хотите изменить: "))
-    print(*[key for key in phone_book.contacts[0].keys()], sep="\n")
+    print(*KEYS, sep="\n")
     field = input("Введите поле, которое хотите изменить: ")
     input_string = input(f"Введите новое значение для {field}: ")
     phone_book.contacts[index][field] = input_string
+    show_contacts(phone_book)
     # return phone_book
 
 
 def delete_contact(phone_book: PhoneBook) -> None:
-    show_contacts(phone_book)
+    show_contacts(phone_book, False)
     index = int(input("Введите номер контакта, который хотите удалить: "))
     phone_book.contacts.pop(index)
 
@@ -164,7 +183,7 @@ def main():
     print(list_of_commands)
     while (input_string := input("Введите команду: ")) != "0":
         if input_string in "14":
-            phone_book = COMMANDS.get(input_string, "0")()
+            phone_book = COMMANDS.get(input_string, "0")(phone_book)
         elif phone_book:
             COMMANDS.get(input_string, "0")(phone_book)
         else:
