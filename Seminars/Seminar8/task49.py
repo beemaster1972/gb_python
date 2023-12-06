@@ -16,8 +16,24 @@
 не должна быть линейной
 """
 from dataclasses import dataclass
+import os
 
 KEYS = ("name", "surname", "lastname", "phone_number")
+
+
+class MyInt:
+    def __init__(self, value, control=None):
+        if control is None:
+            control = -float('inf')
+        self.value = float('inf')
+        try:
+            self.value = int(value)
+        except ValueError:
+            print("Вы ввели не число")
+        else:
+            if self.value > control:
+                self.value = float('inf')
+                print("Нет такого контакта")
 
 
 @dataclass
@@ -31,25 +47,17 @@ class Contact:
         return [self.name, self.surname, self.lastname, self.phone_number]
 
     def __setitem__(self, item, value):
-        # items = {
-        #     "name": self.name,
-        #     "surname": self.surname,
-        #     "lastname": self.lastname,
-        #     "phone_number": self.phone_number,
-        # }
-        # items[item] = value
-        # input()
         setattr(self, item, value)
 
     def __str__(self) -> str:
         return (
-            self.name
-            + " "
-            + self.surname
-            + " "
-            + self.lastname
-            + " "
-            + self.phone_number
+                self.name
+                + " "
+                + self.surname
+                + " "
+                + self.lastname
+                + " "
+                + self.phone_number
         )
 
 
@@ -65,11 +73,6 @@ class PhoneBook:
             for index, contact in enumerate(search_list)
             if search_string in contact
         ]
-        # try:
-        #     index = search_list.index(search_string)
-        # except Exception as e:
-        #     print(e)
-        #     return None
         return [self.contacts[index] for index in result]
 
 
@@ -99,7 +102,11 @@ class ExportPhoneBook:
 class FormatData:
     def __call__(self, *args: any, **kwds: any) -> list:
         phone_book = args[0]
-        data = [",".join(contact) + "\n" for contact in phone_book]
+        if len(args) == 1:
+            data = [",".join(contact) + "\n" for contact in phone_book]
+        else:
+            data = ','.join(phone_book)
+            data += '\n'
         return data
 
 
@@ -145,19 +152,40 @@ def show_contacts(phone_book: PhoneBook, pause: bool = True) -> None:
 
 def edit_contact(phone_book: PhoneBook) -> None:
     show_contacts(phone_book, False)
-    index = int(input("Введите номер контакта, который хотите изменить: "))
+    index = MyInt(input("Введите номер контакта, который хотите изменить: "), len(phone_book.contacts))
+    if index.value == float('inf'):
+        return
     print(*KEYS, sep="\n")
     field = input("Введите поле, которое хотите изменить: ")
-    input_string = input(f"Введите новое значение для {field}: ")
-    phone_book.contacts[index][field] = input_string
-    show_contacts(phone_book)
-    # return phone_book
+    if field in KEYS:
+        input_string = input(f"Введите новое значение для {field}: ")
+        phone_book.contacts[index.value][field] = input_string
+        show_contacts(phone_book)
+    else:
+        print("Не правильно введено имя поля!!!")
 
 
 def delete_contact(phone_book: PhoneBook) -> None:
     show_contacts(phone_book, False)
-    index = int(input("Введите номер контакта, который хотите удалить: "))
-    phone_book.contacts.pop(index)
+    index = MyInt(input("Введите номер контакта, который хотите удалить: "), len(phone_book.contacts))
+    if index.value == float('inf'):
+        return
+    phone_book.contacts.pop(index.value)
+
+
+def copy_to_another_file(phone_book: PhoneBook) -> None:
+    show_contacts(phone_book, False)
+    number_string = MyInt(input("Введите номер строки для копирования: "), len(phone_book.contacts))
+    if number_string.value == float('inf'):
+        return
+    new_file_name = input("Введите имя нового файла: ")
+    flag = 'a'
+    format_data = FormatData()
+    if not os.path.exists(new_file_name):
+        flag = 'w'
+    with open(new_file_name, flag, encoding='utf-8') as file:
+        data = format_data(phone_book.contacts[number_string.value].values(), True)
+        file.write(data)
 
 
 def main():
@@ -169,6 +197,7 @@ def main():
         "5": edit_contact,
         "6": delete_contact,
         "7": show_contacts,
+        "8": copy_to_another_file
     }
     list_of_commands = """
     1. Ручной ввод телефонного справочника
@@ -178,6 +207,7 @@ def main():
     5. Редактировать контакт
     6. Удалить контакт
     7. Показать все контакты
+    8. Скопировать строку из справочника в другой файл
     0. Выход"""
     phone_book = None
     print(list_of_commands)
